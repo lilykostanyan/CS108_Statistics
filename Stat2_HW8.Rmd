@@ -1,0 +1,62 @@
+---
+title: 'Homework 8'
+output:
+  pdf_document:
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{unicode-math}
+date: "2023-12-08"
+---
+
+```{r}
+# Data 
+data_A <- c(62, 65, 58, 60, 64, 61, 63, 59, 66, 62)
+data_B <- c(68, 72, 70, 71, 69, 73, 67, 70, 75, 74)
+
+# Creating histograms
+par(mfrow = c(1, 2)) 
+
+# Histogram for Fertilizer A
+hist(data_A, breaks = 5, col = "darkgray", 
+     main = "Fertilizer A Plant Heights", xlab = "Height (cm)", 
+     ylab = "Frequency")
+
+# Histogram for Fertilizer B
+hist(data_B, breaks = 5, col = "darkgray", 
+     main = "Fertilizer B Plant Heights", 
+     xlab = "Height (cm)")
+```
+```{r}
+# Performing a t-test
+t_test_result <- t.test(data_A, data_B)
+t_test_result
+```
+
+The negative t-statistic indicates that plants treated with Fertilizer B are, on average, taller than those treated with Fertilizer A.
+
+The extremely low p-value suggests that this difference is statistically significant and not due to random chance.
+
+The 95% confidence interval for the difference in means does not include zero, reinforcing the conclusion that there is a significant difference.
+
+The sample means show that plants treated with Fertilizer B are, on average, about 8.9 cm taller than those treated with Fertilizer A.
+
+```{r}
+#install.packages("BayesFactor")
+library(BayesFactor)
+
+# Performing Bayesian t-test
+bayes_test_result <- ttestBF(x = data_A, y = data_B)
+bayes_test_result
+
+```
+Bayes Factor is 22550.34.
+
+The Bayes Factor significantly favors the alternative hypothesis (true difference in means is not equal to zero) over the null hypothesis.
+
+A Bayes Factor greater than 1 indicates evidence against the null hypothesis, and in this case, the value is extremely high, providing strong evidence for a difference in mean heights between the two groups.
+
+
+
+Overall Conclusion:
+
+Both the Welch Two Sample t-test and the Bayesian analysis provide strong evidence that there is a significant difference in the mean height of plants treated with the two different fertilizers, with Fertilizer B leading to taller plants on average compared to Fertilizer A. This conclusion is robust across both frequentist and Bayesian statistical methods.

@@ -1,0 +1,38 @@
+---
+title: "Beta_Dist"
+output: pdf_document
+date: "2023-11-14"
+---
+
+```{r}
+library(ggplot2)
+
+# Parameters for the Beta distributions
+parameters <- data.frame(
+  alpha = c(0.5, 0.5, 1, 1, 1, 2),
+  beta = c(0.5, 1, 0.5, 1, 2, 1)
+)
+
+x_values <- seq(0, 1, length.out = 100)
+
+# Empty data frame to store the density values
+density_data <- data.frame()
+
+# Calculate density values for each set of parameters
+for(i in 1:nrow(parameters)){
+  y_values <- dbeta(x_values, shape1 = parameters$alpha[i], shape2 = parameters$beta[i])
+  density_data <- rbind(density_data, data.frame(x = x_values, y = y_values, group = paste("alpha", parameters$alpha[i],",", "beta", parameters$beta[i])))
+}
+
+# Plot 
+ggplot(density_data, aes(x = x, y = y, colour = group)) +
+  geom_line(size = 0.9) +
+  labs(title = "", 
+       y = "density",
+       x = "", 
+       colour = "Parameters") +
+  theme_minimal() 
+```
+
+
+

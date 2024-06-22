@@ -1,0 +1,160 @@
+---
+title: "Homework 2"
+output:
+  pdf_document:
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{unicode-math}
+date: "2023-09-19"
+---
+Problem 1
+
+To avoid an error, dummy variable trap we keep one category as a reference group, remaining ones represent the change from the reference. That is why we will have n-1 number of dummy variables for independent variable with 𝑛 categories. 
+
+Problem 2 
+
+x is a dummy variable changing values between 0 and 1. 
+$𝛽1$ represents the change in the predicted value of y E(log(y)) when x changes.
+
+Problem 3
+```{r}
+# Loading the data
+data <- read.csv("houseprice.csv")
+#str(data)
+
+# Fitting the regression model
+model <- lm(price ~ sqft + age + sqft:age, data=data)
+
+# Summarizing the model
+summary(model)
+
+# Extracting the coefficient for the interaction term
+gamma <- coef(model)["sqft:age"]
+
+# Print the estimated value of gamma
+cat("The estimated value of gamma is:", gamma)
+```
+Gamma $𝛾$ (interaction term coefficient) represents the effect of the interaction between the size of the house and its age on the selling price.
+
+The estimated value of gamma $\hat{𝛾}$ means that when we change the age by one unit and keep all the other variables constant, it shows the relationship between sqft and price.
+
+```{r}
+# Finding the minimum and maximum values
+min_sqft <- min(data$sqft)
+max_sqft <- max(data$sqft)
+
+# Calculating the marginal effect for the smallest house
+marginal_effect_1 <- coef(model)["age"] + gamma * min_sqft
+
+# Calculate the marginal effect for the largest house
+marginal_effect_2 <- coef(model)["age"] + gamma * max_sqft
+
+# Print the results
+cat("Marginal Effect for Smallest House:", marginal_effect_1)
+cat("Marginal Effect for Largest House:", marginal_effect_2)
+```
+```{r}
+# Calculating the marginal effect
+age <- 20 
+marginal_effect <- coef(model)["sqft"] + gamma * age
+
+cat("Marginal Effect of sqft on price for a 20-year-old house:", marginal_effect)
+#how the price of 20 years old house is changing when 1 additional sqft is added.
+```
+We can interpret it as the change in the predicted price for a 1-unit increase in sqft while having the age fixed at 20 years.
+```{r}
+library(car)
+
+# Performing the F-test
+f_test <- linearHypothesis(model, c("sqft = 0", "age = 0"))
+summary(f_test)
+
+# Extracting the p-value
+p <- f_test$`Pr(>F)`
+
+# Setting the significance level
+a <- 0.05
+
+# Checking if the p-value is less than the significance level
+result <- ifelse(p < a, "Reject", "Fail to reject")
+result
+```
+That means at least one of $𝛽2$ or $𝛽3$ is significant.
+
+Problem 4
+```{r}
+#1
+library(ggplot2)
+
+# Load the data
+data <- read.csv("fullmoon.csv")
+
+# Examine the histogram of cases
+ggplot(data, aes(x = cases)) +
+  geom_histogram(fill = "blue", color = "black") +
+  labs(title = "Histogram of Cases", x = "Cases", y = "Frequency")
+
+# Create the variable ln(cases)
+data$ln_cases <- log(data$cases)
+
+# Examine the histogram of ln(Cases)
+ggplot(data, aes(x = ln_cases)) +
+  geom_histogram(fill = "turquoise", color = "black") +
+  labs(title = "Histogram of ln(Cases)", x = "ln(Cases)", y = "Frequency")
+```
+In the histogram of cases (without logarithm) we see that it is right skewed.
+ 
+The histogram of cases with logarithm is much closer to Normal distribution.
+
+So, by taking the natural logarithm of a variable we can make the distribution more symmetric and reduce the impact of extreme values.
+```{r}
+#2
+model_1 <- lm(log(cases) ~ time + holiday + friday + saturday + fullmoon + newmoon, data = data)
+summary(model_1)
+```
+Based on the regression results, it is not possible to conclude that there is a statistically significant effect of a full moon on emergency room cases.
+
+However, we see that the variables time, holiday, friday, and saturday (saturday is highly significant) are statistically significant.
+The time variable is positively associated with log(cases), meaning that as time increases, log(cases) tends to increase.
+Holiday, Friday, and Saturday variables are also positively associated with log(cases), indicating that these factors tend to increase log(cases) compared to non-holiday days and other weekdays. 
+
+The fullmoon and  the newmoon are not statistically significant. That means presence does not have any significant effect on the number of cases.
+```{r}
+#3
+```
+The coefficient for the fullmoon is not statistically significant because the p-value = 0.52211. The presence of it does not have any significant effect on the number of cases log(cases) when controlling for other variables in the model.
+```{r}
+#4
+library(car)
+
+# Performing the F-test
+f_test <- linearHypothesis(model_1, c("friday = 0", "saturday = 0"))
+summary(f_test)
+
+# Extracting the p-value
+p <- f_test$`Pr(>F)`
+
+# Setting the significance level
+a <- 0.95
+
+# Checking if the p-value is less than the significance level
+result <- ifelse(p < a, "Reject", "Fail to reject")
+result
+```
+That means at least one of friday or saturday is significant.
+```{r}
+#5
+model_2 <- lm(log(cases) ~ time + holiday + saturday + fullmoon + newmoon, data = data)
+summary(model_2)
+```
+After dropping friday variable from the model, we see that p-value of fullmoon changed to 0.55944, but the difference is really small even after removing friday. So, the effect of a fullmoon remains statistically insignificant.
+```{r}
+#6
+data$interval_time <- cut(data$time, breaks = c(0, 100, 200, Inf), labels = c("0-100 days", "101-200 days", "200+ days")) 
+
+model_3 <- lm(log(cases) ~ interval_time + holiday + saturday + fullmoon + newmoon, data = data)
+summary(model_3)
+```
+R has automatically treated "0-100" as a reference group, and that is why it does not display "0-100" coefficients. It provides coefficients for the other groups in relation to the reference one. 
+
+In the regression model, the coefficients of the interval_time variable represent the estimated effects of different time intervals on log(cases). We see that "101-200" interval has a stronger and more statistically significant effect compared to "200+" interval. So, a longer time period within the range of "101-200" tends to be associated with a higher number of cases, and this effect is statistically supported.

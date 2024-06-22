@@ -1,0 +1,143 @@
+---
+title: "Homework 4"
+output:
+  pdf_document:
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{unicode-math}
+date: "2023-10-12"
+---
+
+Problem 1
+
+The Poisson distribution may be useful to model events such as
+
+a) Time interval between bus arrivals
+b) The price of the plane ticket
+c) The time of the first goal during the soccer
+d) The number of bus arriving to a bus station between 12:00 and 16:00
+
+We can use a Poisson distribution to predict or explain the number of events occurring within a given interval of time or space. That is why d) is correct.
+
+Problem 2
+```{r}
+library(dplyr)
+library(tidyr)
+library(glm2)
+
+data_1 <- read.csv("diabetes.csv")
+
+# the Logistic regression model
+model_1 <- glm(Outcome ~ Insulin + BMI + Pregnancies, data = data_1, family = binomial)
+
+summary(model_1)
+```
+The intercept represents the log-odds of having diabetes when all predictor variables (Insulin, BMI, and Pregnancies) are equal to 0.
+
+The coefficient for "Insulin" represents how a one-unit increase in Insulin affects the log-odds of having diabetes, holding other variables constant. In this case, it's positive (0.0016953), indicating that as Insulin increases, the log-odds of having diabetes also increase. This is a significant effect as indicated by the p-value (0.0156) and Signif. Code *. 
+
+The coefficient for "BMI" (0.0940904) represents how a one-unit increase in BMI affects the log-odds of having diabetes while holding other variables constant. It's also positive, suggesting that higher BMI is associated with an increased likelihood of having diabetes. This effect is highly significant with a very small p-value (2.57e-13) and Signif. Code ***.
+
+The coefficient for "Pregnancies" (0.1721690) represents how a one-unit increase in the number of pregnancies affects the log-odds of having diabetes while controlling for other variables. It's also positive, indicating that more pregnancies are associated with a higher likelihood of having diabetes. This effect is significant with a p-value of (7.66e-10) and Signif. Code ***.
+
+So, all three predictor variables have p-values significantly less than 0.05, which indicates their statistical significance in explaining the likelihood of diabetes.
+
+Find the minimum and maximum values of predictions and discuss how well the model predicts the probability of having diabetes.
+```{r}
+predicted_1 <- predict(model_1, newdata = data_1, type = "response")
+data_1$Prediction = predicted_1
+#View(data_1)
+min(predicted_1)
+max(predicted_1)
+```
+We predicted that the patient can have a diabetes with the minimum probability of 0.01072366 and the actual outcome is 0 which means that patient does not have diabetes. Now, same for the maximal probability of 0.9080677, we see that the actual outcome is 1 which means that patient does have diabetes. So, it is clear that the model predicts the probability of having diabetes very well.
+
+What is the probability for person with median BMI and Insulin with 0 pregnancy to have diabetes?
+```{r}
+# type = "response" argument to get the predicted probability of having diabetes.
+predict(model_1, newdata = data.frame(Insulin = median(data_1$Insulin), BMI = median(data_1$BMI), Pregnancies = 0), type = "response")
+```
+
+What is odd ratio for patients with maximum BMI and maximum Insulin with 4 pregnancies?
+```{r}
+# type = "link" to get the predicted log-odds.
+log_odds <- predict(model_1, newdata = data.frame(Insulin = max(data_1$Insulin), BMI = max(data_1$BMI), Pregnancies = 4), type = "link")
+
+# We calculate the odds ratio by exponentiating the log-odds.
+exp(log_odds)
+```
+The odds ratio represents the multiplicative change in the odds of the event (having diabetes) associated with a one-unit increase in the predictor variable.
+
+Problem 3
+```{r}
+data_2 <- read.csv("Armenian_pub.csv")
+# the Poisson regression model
+data_2$Freq <- factor(data_2$Freq, levels = 0:2, labels = c("Rare","Several times a month", "Several times a week"))
+poisson_model <- glm(Age ~ Income + WTS + Freq, data = data_2, family = poisson)
+
+summary(poisson_model)
+```
+The estimated coefficient for the "Intercept" is 2.933e+00. This represents the expected log count of "Age" when all other predictors are zero (Income = 0, WTS = 0, and FreqSeveral times a month = "Rare", FreqSeveral times a week = "Rare"). The very small p-value (2e-16) indicates that this intercept is highly significant and Signif. Code ***.
+
+The estimated coefficient for "Income" is approximately 8.550e-08. However, the p-value for Income is 0.591, indicating that it is not statistically significant at conventional significance levels (e.g., 0.05). This suggests that changes in income are not associated with significant changes in the count of Age.
+
+The estimated coefficient for "WTS" is approximately 1.131e-06, which is also close to zero. The p-value is 0.805, indicating that WTS is not statistically significant in predicting age. Similar to income, this predictor does not appear to be statistically significant.
+
+The coefficient for "Frequency (Several times a month)" is approximately -7.812e-04, and the p-value is 0.985. This suggests that the frequency of visiting the pub "Several times a month" is not statistically significant in predicting age.
+
+The coefficient for "Frequency (Several times a week)" is approximately 6.612e-03, and the p-value is 0.910. Like the previous frequency category, visiting the pub "Several times a week" is not statistically significant in predicting age.
+
+In summary, the intercept is highly significant, suggesting that there is a significant relationship between the intercept and the variable Age. However, the other predictor variables (Income, WTS, and both levels of Frequency) are not statistically significant in explaining the variation in "Age." These variables do not appear to be strongly associated with the Age based on this model.
+
+Obtain predictions from the Poisson regression model. Find the minimum and maximum values and discuss how well the model predicts age.
+```{r}
+predicted_2 <- predict(poisson_model, newdata = data_2, type = "response", na.action = "na.exclude")
+predicted_2
+min(predicted_2)
+max(predicted_2)
+```
+Here, we got our predicted minimum age of 18.76285, but in the data we have a lot of ages being 17. Also, for the maximum age our predicted is 20.51026, but again we have values for age being equal to 21. From here, we see that our model does not predict age well. 
+
+Find the expected age of visitor who has 200.000 income, 3000 WTS and is coming to Pub Several times a week.
+```{r}
+# Set the predictor values
+income_value <- 200000
+wts_value <- 3000
+# Frequency = "Several times a week"
+freq_value <- 2 
+
+# Calculate the expected age
+expected_age_c <- exp(coef(poisson_model)["(Intercept)"] + (income_value * coef(poisson_model)["Income"]) + (wts_value * coef(poisson_model)["WTS"]) + freq_value * coef(poisson_model)["FreqSeveral times a week"])
+expected_age_c
+```
+
+Find the expected age of visitor who has 100.000 income, 5000 WTS and is coming to Pub rare.
+```{r}
+# Set the predictor values
+income_value <- 100000
+wts_value <- 5000
+
+# Calculate the expected age
+expected_age_d <- exp(coef(poisson_model)["(Intercept)"] + (income_value * coef(poisson_model)["Income"]) + (wts_value * coef(poisson_model)["WTS"]))
+expected_age_d
+```
+
+Calculate the probability that at least one of the visitors from c) and d) will be older than 25. (Considering they are independent from each other).
+P(A ∪ B) = P(A) + P(B) - P(A ∩ B)
+```{r}
+# Calculate the probabilities of being older than 25 for each visitor
+probability_visitor_c <- 1 - ppois(25, lambda = expected_age_c, lower.tail = TRUE)
+probability_visitor_d <- 1 - ppois(25, lambda = expected_age_d, lower.tail = TRUE)
+
+# Calculate the probability of the intersection (both not being older than 25)
+probability_intersection <- probability_visitor_c * probability_visitor_d
+
+# Calculate the probability that at least one of them is older than 25 using the inclusion-exclusion principle
+probability_at_least_one_older <- probability_visitor_c + probability_visitor_d - probability_intersection
+
+# Print the result
+probability_at_least_one_older
+
+```
+
+
